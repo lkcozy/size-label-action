@@ -9,11 +9,11 @@ const Diff = require("diff");
 
 const sizes = {
   0: "XS",
-  10: "S",
-  30: "M",
-  100: "L",
-  500: "XL",
-  1000: "XXL"
+  50: "S",
+  200: "M",
+  500: "L",
+  1000: "XL",
+  2000: "XXL",
 };
 
 const actions = ["opened", "synchronize"];
@@ -51,22 +51,22 @@ async function main() {
 
   const pullRequestHome = {
     owner: eventData.pull_request.base.repo.owner.login,
-    repo: eventData.pull_request.base.repo.name
+    repo: eventData.pull_request.base.repo.name,
   };
 
   const pull_number = eventData.pull_request.number;
 
   const octokit = new Octokit({
     auth: `token ${GITHUB_TOKEN}`,
-    userAgent: "pascalgn/size-label-action"
+    userAgent: "pascalgn/size-label-action",
   });
 
   const pullRequestDiff = await octokit.pulls.get({
     ...pullRequestHome,
     pull_number,
     headers: {
-      accept: "application/vnd.github.v3.diff"
-    }
+      accept: "application/vnd.github.v3.diff",
+    },
   });
 
   const changedLines = getChangedLines(isIgnored, pullRequestDiff.data);
@@ -90,7 +90,7 @@ async function main() {
     await octokit.issues.addLabels({
       ...pullRequestHome,
       issue_number: pull_number,
-      labels: add
+      labels: add,
     });
   }
 
@@ -99,7 +99,7 @@ async function main() {
     await octokit.issues.removeLabel({
       ...pullRequestHome,
       issue_number: pull_number,
-      name: label
+      name: label,
     });
   }
 
@@ -117,9 +117,9 @@ function debug(...str) {
 function parseIgnored(str = "") {
   const ignored = str
     .split(/\r|\n/)
-    .map(s => s.trim())
-    .filter(s => s.length > 0 && !s.startsWith("#"))
-    .map(s =>
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0 && !s.startsWith("#"))
+    .map((s) =>
       s.length > 1 && s[0] === "!"
         ? { not: globrex(s.substr(1), globrexOptions) }
         : globrex(s, globrexOptions)
@@ -158,13 +158,13 @@ async function readFile(path) {
 
 function getChangedLines(isIgnored, diff) {
   return Diff.parsePatch(diff)
-    .flatMap(file =>
+    .flatMap((file) =>
       isIgnored(file.oldFileName) && isIgnored(file.newFileName)
         ? []
         : file.hunks
     )
-    .flatMap(hunk => hunk.lines)
-    .filter(line => line[0] === "+" || line[0] === "-").length;
+    .flatMap((hunk) => hunk.lines)
+    .filter((line) => line[0] === "+" || line[0] === "-").length;
 }
 
 function getSizeLabel(changedLines) {
@@ -196,7 +196,7 @@ function getLabelChanges(newLabel, existingLabels) {
 if (require.main === module) {
   main().then(
     () => (process.exitCode = 0),
-    e => {
+    (e) => {
       process.exitCode = 1;
       console.error(e);
     }
